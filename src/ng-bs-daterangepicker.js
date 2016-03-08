@@ -53,6 +53,8 @@
           function formatted(dates) {
             ngModel[ 'startDate' ] = dates.startDate;
             ngModel[ 'endDate' ] = dates.endDate;
+            if (options.singleDatePicker)
+              return format(dates.startDate);
             return [ format(dates.startDate), format(dates.endDate) ].join(options.separator);
           }
 
