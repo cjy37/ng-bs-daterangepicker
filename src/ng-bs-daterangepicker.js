@@ -20,10 +20,11 @@
           }
 
           var options = {};
-          options.format = $attributes.format || 'YYYY-MM-DD';
-          options.separator = $attributes.separator || ' - ';
-          options.minDate = $attributes.minDate && moment($attributes.minDate);
-          options.maxDate = $attributes.maxDate && moment($attributes.maxDate);
+          options.format = $attributes.format && $parse($attributes.format)($scope) || 'YYYY-MM-DD';
+          options.separator = $attributes.separator && $parse($attributes.separator)($scope) || ' / ';
+          options.minDate = $attributes.minDate && $parse($attributes.minDate)($scope);
+          options.maxDate = $attributes.maxDate && $parse($attributes.maxDate)($scope);
+          $attributes.limit = $attributes.limit && $parse($attributes.limit)($scope);
           options.dateLimit = $attributes.limit && moment.duration.apply(this, $attributes.limit.split(' ').map(function (elem, index) {
               return index === 0 && parseInt(elem, 10) || elem;
             }));
