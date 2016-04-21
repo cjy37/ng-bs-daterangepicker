@@ -1,6 +1,6 @@
 {
   "name": "ng-bs-daterangepicker",
-  "description": "AngularJS directive for bootstrap-daterangepicker",
+  "description": "AngularJS directive for bootstrap-daterangepicker by cjy37",
   "version": "0.0.6",
   "main": "./src/ng-bs-daterangepicker.js",
   "dependencies": {
