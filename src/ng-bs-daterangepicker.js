@@ -52,11 +52,23 @@
           }
 
           function formatted(dates) {
-            ngModel[ 'startDate' ] = dates.startDate;
-            ngModel[ 'endDate' ] = dates.endDate;
+            //ngModel[ 'startDate' ] = dates.startDate;
+            //ngModel[ 'endDate' ] = dates.endDate;
             if (options.singleDatePicker)
               return format(dates.startDate);
             return [ format(dates.startDate), format(dates.endDate) ].join(options.separator);
+          }
+
+          function format2(date) {
+            return momentify(date).utc().toISOString();// $filter('date')(datify(date), "YYYY-MM-DD HH:mm:ss".replace(/Y/g, 'y').replace(/D/g, 'd')); //date.format(options.format);
+          }
+
+          function formatted2(dates) {
+            ngModel[ 'startDate' ] = dates.startDate;
+            ngModel[ 'endDate' ] = dates.endDate;
+            if (options.singleDatePicker)
+              return format2(dates.startDate);
+            return [ format2(dates.startDate), format2(dates.endDate) ].join(options.separator);
           }
 
           ngModel.$render = function () {
@@ -64,7 +76,10 @@
               $element.val('');
               return;
             }
-            $element.val(ngModel.$viewValue);
+            $element.val(formatted({
+              startDate : momentify(ngModel.startDate),
+              endDate : momentify(ngModel.endDate)
+            }));//$element.val(ngModel.$viewValue);
           };
 
           $scope.$watch(function () {
@@ -80,13 +95,13 @@
             if (modelValue && !ngModel.startDate) {
               var values = modelValue.split(options.separator);
               if (values.length == 2) {
-                ngModel.$setViewValue(formatted({
+                ngModel.$setViewValue(formatted2({
                   startDate : momentify(values[ 0 ]),
                   endDate : momentify(values[ 1 ])
                 }));
               }
               else if (values.length == 1) {
-                ngModel.$setViewValue(formatted({
+                ngModel.$setViewValue(formatted2({
                   startDate : momentify(values[ 0 ]),
                   endDate : momentify(values[ 0 ])
                 }));
@@ -106,33 +121,25 @@
               $element.data('daterangepicker').updateCalendars();
               $element.data('daterangepicker').updateInputText();
             }
-
-
           });
 
           $element.daterangepicker(options, function (start, end, label) {
 
             //var modelValue = ngModel.$viewValue;
-
             if (angular.equals(start, ngModel.startDate) && angular.equals(end, ngModel.endDate)) {
               return;
             }
 
             $scope.$apply(function () {
-
-              ngModel.$setViewValue(formatted({
+              ngModel.$setViewValue(formatted2({
                 startDate : (moment.isMoment(ngModel.startDate)) ? start : start.toDate(),
                 endDate : (moment.isMoment(ngModel.endDate)) ? end : end.toDate()
               }));
               ngModel.$render();
             });
-
           });
-
         }
-
       };
-
     } ]);
 
 })(angular);
