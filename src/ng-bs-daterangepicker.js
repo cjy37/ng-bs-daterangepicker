@@ -1,5 +1,5 @@
 /**
- * @license ng-bs-daterangepicker v0.0.7
+ * @license ng-bs-daterangepicker v0.0.8
  * (c) 2013 Luis Farzati http://github.com/luisfarzati/ng-bs-daterangepicker
  * License: MIT
  */
@@ -44,6 +44,7 @@
           }
 
           function momentify(date) {
+			moment.locale('zh-cn');
             return (!moment.isMoment(date)) ? moment(date) : date;
           }
 
@@ -55,19 +56,21 @@
             //ngModel[ 'startDate' ] = dates.startDate;
             //ngModel[ 'endDate' ] = dates.endDate;
             if (options.singleDatePicker)
-              return format(dates.startDate);
+              return format(dates.endDate);
             return [ format(dates.startDate), format(dates.endDate) ].join(options.separator);
           }
 
           function format2(date) {
-            return momentify(date).utc().toISOString();// $filter('date')(datify(date), "YYYY-MM-DD HH:mm:ss".replace(/Y/g, 'y').replace(/D/g, 'd')); //date.format(options.format);
+		    if (options.singleDatePicker)
+				return moment(momentify(date).format('YYYY-MM-DD')).utc().toISOString();
+			return momentify(date).utc().toISOString();
           }
 
           function formatted2(dates) {
             ngModel[ 'startDate' ] = dates.startDate;
             ngModel[ 'endDate' ] = dates.endDate;
             if (options.singleDatePicker)
-              return format2(dates.startDate);
+              return format2(dates.endDate);
             return [ format2(dates.startDate), format2(dates.endDate) ].join(options.separator);
           }
 
