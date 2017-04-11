@@ -6,6 +6,7 @@
 (function (angular) {
 
   'use strict';
+  moment.locale('zh-cn');
 
   angular
     .module('ngBootstrap', [])
@@ -14,7 +15,7 @@
         restrict : 'E',
         require : '?ngModel',
         link : function ($scope, $element, $attributes, ngModel) {
-
+          
           if ($attributes.type !== 'daterange' || ngModel === null) {
             return;
           }
@@ -44,7 +45,6 @@
           }
 
           function momentify(date) {
-			moment.locale('zh-cn');
             return (!moment.isMoment(date)) ? moment(date) : date;
           }
 
@@ -60,35 +60,40 @@
             return [ format(dates.startDate), format(dates.endDate) ].join(options.separator);
           }
 
-          function format2(date) {
-		    if (options.singleDatePicker)
-				return moment(momentify(date).format('YYYY-MM-DD')).utc().toISOString();
-			return momentify(date).utc().toISOString();
+          function formatView(date) {
+            if (options.singleDatePicker)
+              return moment(momentify(date).format('YYYY-MM-DD')).toISOString();
+            return momentify(date).toISOString();
           }
 
-          function formatted2(dates) {
+          function formattedView(dates) {
             ngModel[ 'startDate' ] = dates.startDate;
             ngModel[ 'endDate' ] = dates.endDate;
             if (options.singleDatePicker)
-              return format2(dates.endDate);
-            return [ format2(dates.startDate), format2(dates.endDate) ].join(options.separator);
+              return formatView(dates.endDate);
+            return [ formatView(dates.startDate), formatView(dates.endDate) ].join(options.separator);
           }
 
           ngModel.$render = function () {
+            
             if (!ngModel.$viewValue || !ngModel.startDate) {
               $element.val('');
               return;
             }
+            var startDate = momentify(ngModel.startDate);
+            var endDate = momentify(ngModel.endDate);
             $element.val(formatted({
-              startDate : momentify(ngModel.startDate),
-              endDate : momentify(ngModel.endDate)
+              startDate : startDate.local(),
+              endDate : endDate.local()
             }));//$element.val(ngModel.$viewValue);
+            //console.log(">>>>>>>>>>>>>>DATE render",ngModel);
           };
 
           $scope.$watch(function () {
             return $parse($attributes.ngModel)($scope);
           }, function (modelValue, oldModelValue) {
-
+            
+            
             if (!modelValue || modelValue.length == 0) {
               ngModel.startDate = null;
               ngModel.endDate = null;
@@ -98,19 +103,19 @@
             if (modelValue && !ngModel.startDate) {
               var values = modelValue.split(options.separator);
               if (values.length == 2) {
-                ngModel.$setViewValue(formatted2({
+                ngModel.$setViewValue(formattedView({
                   startDate : momentify(values[ 0 ]),
                   endDate : momentify(values[ 1 ])
                 }));
               }
               else if (values.length == 1) {
-                ngModel.$setViewValue(formatted2({
+                ngModel.$setViewValue(formattedView({
                   startDate : momentify(values[ 0 ]),
                   endDate : momentify(values[ 0 ])
                 }));
               }
               ngModel.$render();
-              return;
+              //return;
             }
 
             if (oldModelValue !== modelValue) {
@@ -127,14 +132,14 @@
           });
 
           $element.daterangepicker(options, function (start, end, label) {
-
             //var modelValue = ngModel.$viewValue;
             if (angular.equals(start, ngModel.startDate) && angular.equals(end, ngModel.endDate)) {
               return;
             }
 
             $scope.$apply(function () {
-              ngModel.$setViewValue(formatted2({
+              
+              ngModel.$setViewValue(formattedView({
                 startDate : (moment.isMoment(ngModel.startDate)) ? start : start.toDate(),
                 endDate : (moment.isMoment(ngModel.endDate)) ? end : end.toDate()
               }));
