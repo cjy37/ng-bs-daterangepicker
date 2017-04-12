@@ -21,14 +21,28 @@
           }
 
           var options = {};
+
+          //moment 的格式
           options.format = $attributes.format && $parse($attributes.format)($scope) || 'YYYY-MM-DD';
+
+          //angular 的格式
+          options.formatFilter = options.format.replace(/Y/g, 'y').replace(/D/g, 'd');
+
+          //分隔符
           options.separator = $attributes.separator && $parse($attributes.separator)($scope) || ' / ';
+
+          //最小时间
           options.minDate = $attributes.minDate && $parse($attributes.minDate)($scope);
+
+          //最大时间
           options.maxDate = $attributes.maxDate && $parse($attributes.maxDate)($scope);
+
           $attributes.limit = $attributes.limit && $parse($attributes.limit)($scope);
+
           options.dateLimit = $attributes.limit && moment.duration.apply(this, $attributes.limit.split(' ').map(function (elem, index) {
               return index === 0 && parseInt(elem, 10) || elem;
             }));
+
           options.locale = $attributes.locale && $parse($attributes.locale)($scope);
           options.opens = $attributes.opens || $parse($attributes.opens)($scope);
           options.singleDatePicker = $attributes.singleDatePicker && $parse($attributes.singleDatePicker)($scope);
@@ -40,76 +54,78 @@
             angular.extend(options, $parse($attributes.enabletimepicker)($scope));
           }
 
+          // to js Date object
           function datify(date) {
             return moment.isMoment(date) ? date.toDate() : date;
           }
 
+          // to moment date object
           function momentify(date) {
             return (!moment.isMoment(date)) ? moment(date) : date;
           }
 
-          function format(date) {
-            return $filter('date')(datify(date), options.format.replace(/Y/g, 'y').replace(/D/g, 'd')); //date.format(options.format);
-          }
-
-          function formatted(dates) {
-            //ngModel[ 'startDate' ] = dates.startDate;
-            //ngModel[ 'endDate' ] = dates.endDate;
-            if (options.singleDatePicker)
-              return format(dates.endDate);
-            return [ format(dates.startDate), format(dates.endDate) ].join(options.separator);
-          }
-
+          // format to local format string
           function formatView(date) {
-            if (options.singleDatePicker)
-              return moment(momentify(date).format('YYYY-MM-DD')).toISOString();
-            return momentify(date).toISOString();
+            return $filter('date')(datify(date), options.formatFilter);
           }
 
           function formattedView(dates) {
-            ngModel[ 'startDate' ] = dates.startDate;
-            ngModel[ 'endDate' ] = dates.endDate;
             if (options.singleDatePicker)
-              return formatView(dates.endDate);
+              return formatView(dates.startDate);
             return [ formatView(dates.startDate), formatView(dates.endDate) ].join(options.separator);
           }
 
+          // format to utc format string
+          function formatValue(date) {
+            return momentify(date).toISOString();
+          }
+
+          function formattedValue(dates) {
+            ngModel[ 'startDate' ] = dates.startDate;
+            ngModel[ 'endDate' ] = dates.endDate;
+            if (options.singleDatePicker)
+              return formatValue(dates.startDate);
+            return [ formatValue(dates.startDate), formatValue(dates.endDate) ].join(options.separator);
+          }
+
+          // render view display
           ngModel.$render = function () {
-            
+            // no data
             if (!ngModel.$viewValue || !ngModel.startDate) {
               $element.val('');
               return;
             }
-            var startDate = momentify(ngModel.startDate);
-            var endDate = momentify(ngModel.endDate);
-            $element.val(formatted({
-              startDate : startDate.local(),
-              endDate : endDate.local()
-            }));//$element.val(ngModel.$viewValue);
-            //console.log(">>>>>>>>>>>>>>DATE render",ngModel);
+            // setter view display
+            $element.val(formattedView({
+              startDate : momentify(ngModel.startDate).local(),
+              endDate : momentify(ngModel.endDate).local()
+            }));
           };
 
+          // on ng-model change
           $scope.$watch(function () {
             return $parse($attributes.ngModel)($scope);
           }, function (modelValue, oldModelValue) {
             
-            
+            // no data
             if (!modelValue || modelValue.length == 0) {
               ngModel.startDate = null;
               ngModel.endDate = null;
               ngModel.$setViewValue('');
               ngModel.$render();
             }
+
+            // has date (string format data)
             if (modelValue && !ngModel.startDate) {
               var values = modelValue.split(options.separator);
               if (values.length == 2) {
-                ngModel.$setViewValue(formattedView({
+                ngModel.$setViewValue(formattedValue({
                   startDate : momentify(values[ 0 ]),
                   endDate : momentify(values[ 1 ])
                 }));
               }
               else if (values.length == 1) {
-                ngModel.$setViewValue(formattedView({
+                ngModel.$setViewValue(formattedValue({
                   startDate : momentify(values[ 0 ]),
                   endDate : momentify(values[ 0 ])
                 }));
@@ -123,14 +139,21 @@
             }
 
             if (ngModel.startDate) {
-              $element.data('daterangepicker').startDate = momentify(ngModel.startDate);
-              $element.data('daterangepicker').endDate = momentify(ngModel.endDate);
-              $element.data('daterangepicker').updateView();
-              $element.data('daterangepicker').updateCalendars();
-              $element.data('daterangepicker').updateInputText();
+              // jquery 控件操作
+              var drp = $element.data('daterangepicker');
+              
+              drp.startDate = momentify(ngModel.startDate);
+              drp.endDate = momentify(ngModel.endDate);
+
+              if (drp.hasOwnProperty('updateInputText')) {
+                drp.updateView();
+                drp.updateCalendars();
+                drp.updateInputText();
+              }
             }
           });
 
+          // jquery 控件初始化
           $element.daterangepicker(options, function (start, end, label) {
             //var modelValue = ngModel.$viewValue;
             if (angular.equals(start, ngModel.startDate) && angular.equals(end, ngModel.endDate)) {
@@ -139,7 +162,7 @@
 
             $scope.$apply(function () {
               
-              ngModel.$setViewValue(formattedView({
+              ngModel.$setViewValue(formattedValue({
                 startDate : (moment.isMoment(ngModel.startDate)) ? start : start.toDate(),
                 endDate : (moment.isMoment(ngModel.endDate)) ? end : end.toDate()
               }));

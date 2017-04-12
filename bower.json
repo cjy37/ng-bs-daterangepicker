@@ -1,7 +1,7 @@
 {
   "name": "ng-bs-daterangepicker",
   "description": "AngularJS directive for bootstrap-daterangepicker by cjy37, update to output utc datetime string",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "main": "./src/ng-bs-daterangepicker.js",
   "dependencies": {
     "angular": ">= 1.0.7",
