@@ -83,6 +83,10 @@
           function formattedValue(dates) {
             ngModel[ 'startDate' ] = dates.startDate;
             ngModel[ 'endDate' ] = dates.endDate;
+			
+			if (!dates.startDate || !dates.endDate)
+				return '';
+			
             if (options.singleDatePicker)
               return formatValue(dates.startDate);
             return [ formatValue(dates.startDate), formatValue(dates.endDate) ].join(options.separator);
@@ -92,7 +96,11 @@
           ngModel.$render = function () {
             // no data
             if (!ngModel.$viewValue || !ngModel.startDate) {
-              $element.val('');
+              //$element.val('');
+			  $element.val(formattedView({
+				  startDate : undefined,
+				  endDate : undefined
+				}));
               return;
             }
             // setter view display
@@ -109,9 +117,13 @@
             
             // no data
             if (!modelValue || modelValue.length == 0) {
-              ngModel.startDate = null;
-              ngModel.endDate = null;
-              ngModel.$setViewValue('');
+              ngModel.startDate = undefined;
+              ngModel.endDate = undefined;
+              //ngModel.$setViewValue('');
+			  ngModel.$setViewValue(formattedValue({
+                startDate : undefined,
+                endDate : undefined
+              }));
               ngModel.$render();
             }
 
@@ -153,6 +165,21 @@
             }
           });
 
+		  var defaultValue = $parse($attributes.ngModel)($scope);
+		  if (!defaultValue || defaultValue.length == 0) {
+			options.startDate = undefined;
+			options.endDate = undefined;
+		  }
+		  $element.on('apply.daterangepicker', function(event, dpk){
+			  
+			  if (!dpk.startDate || !dpk.endDate)
+				  return;
+			  
+			  ngModel.startDate = dpk.startDate;
+              ngModel.endDate = dpk.endDate;
+			  ngModel.$setViewValue(formattedValue(ngModel));
+              ngModel.$render();
+		  });
           // jquery 控件初始化
           $element.daterangepicker(options, function (start, end, label) {
             //var modelValue = ngModel.$viewValue;
